@@ -37,6 +37,10 @@ public class CustomerManager : MonoBehaviour
 
     void Update()
     {
+        if (DayManager.Instance == null || !DayManager.Instance.IsOpen()) {
+            return;
+        }
+
         UpdateSatisfaction();
         TryAutoSell();
         UpdateUI();
@@ -67,7 +71,8 @@ public class CustomerManager : MonoBehaviour
             int basePrice = GetPrice(orderFilling) * orderAmount;
             int finalPrice = CalculateFinalPrice(basePrice);
 
-            moneyManager.AddMoney(finalPrice);
+            moneyManager.AddMoney(finalPrice);                   // 판매금액 추가
+            DayManager.Instance.RecordSale(finalPrice, true);    // 하루매출 기록
 
             Debug.Log($"판매 성공: {orderFilling} x{orderAmount}");
             GenerateNewOrder();

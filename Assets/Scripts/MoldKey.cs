@@ -59,6 +59,10 @@ public class MoldKey : MonoBehaviour {
     // ----------------------------
     void Update()
     {
+        if (DayManager.Instance == null || !DayManager.Instance.IsOpen()) {
+            return;
+        }
+
         // 담당 키 입력 확인
         if (Input.GetKeyDown(keyCode))
         {
@@ -283,6 +287,9 @@ public class MoldKey : MonoBehaviour {
         state = MoldState.Burnt;
         timer = 0f;
         image.color = Color.red;
+
+        DayManager.Instance.RecordBurned(); // 하루 태운 갯수
+
         Debug.Log($"{keyCode} 탐");
     }
 

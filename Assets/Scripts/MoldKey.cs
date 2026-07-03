@@ -12,46 +12,78 @@ public class MoldKey : MonoBehaviour {
 
     // 붕어틀 UI 이미지
     // 색상 변경할 때 사용
-    public Image image;
+//    public Image image;
 
-    // 현재 선택된 재료를 가져오기 위한 참조
-    public IngredientSelector ingredientSelector;
+    [SerializeField] private Color readyOutlineColor = Color.yellow;
+    [SerializeField] private Color completedOutlineColor = Color.green;
+
+    [Header("MoldImage")]
+    public Image fishImage;
+    public Outline fishOutline;
+//    public GameObject yellowOutline;
+//    public GameObject greenOutline;
+
+
+    [Header("Sprites")]
+    public Sprite emptySprite;
+    public Sprite batterSprite;
+    public Sprite frontStage1Sprite;
+    public Sprite frontStage2Sprite;
+    public Sprite frontStage3Sprite;
+    public Sprite backStage1Sprite;
+    public Sprite backStage2Sprite;
+    public Sprite backStage3Sprite;
+    public Sprite completedSprite;
+    public Sprite burntSprite;
 
     // 붕어틀 상태
-    public enum MoldState {
-        Empty,
-        BatterOnly,
-        CookingFront,
-        AlmostReadyFront,
-        NeedFlip,
-        CookingBack,
-        AlmostReadyBack,
-        Done,
-        Burnt
+    public enum MoldState
+    {
+        Empty,          // 빈 틀
+        Batter,         // 반죽 투입
+        BakingFront,    // 앞면 굽기
+        ReadyToFlip,    // 뒤집기 표기
+        BakingBack,     // 뒷면 굽기
+        Completed,      // 완성(회수)
+        Burnt           // 태움
     }
 
     /********** 붕어빵 데이터 **********/
-    private bool hasBatter;                     // 반죽 투입 여부
-    private IngredientData filling;             // 속재료("RedBean", "Custard" 등)
+//    private bool hasBatter;                     // 반죽 투입 여부
+//    private IngredientData filling;             // 속재료("RedBean", "Custard" 등)
     private MoldState state = MoldState.Empty;  // 현재 붕어틀 상태
 
     /********** 시간 관련 **********/
     private float timer;                    // 현재 상태에서 흐른 시간
-    private float cookTime = 3f;            // 완전히 익는데 걸리는 시간
-    private float almostReadyTime = 2.5f;   // 완성 직전 노랑 상태 진입 시점
-    private float actionLimitTime = 1.5f;   // 플레이어가 반응할 수 있는 제한 시간 (뒤집기 또는 수거 안 하면 탐)
+//    private float cookTime = 3f;            // 완전히 익는데 걸리는 시간
+//    private float almostReadyTime = 2.5f;   // 완성 직전 노랑 상태 진입 시점
+//    private float actionLimitTime = 1.5f;   // 플레이어가 반응할 수 있는 제한 시간 (뒤집기 또는 수거 안 하면 탐)
 
-    /********** 깜빡임 관련 **********/
-    private float blinkTimer;
-    private bool blinkOn = true;
+[SerializeField] private float bakeTime = 5f;
+[SerializeField] private float flipStartRatio = 0.6f;
+[SerializeField] private float flipEndRatio = 0.9f;
+[SerializeField] private float burntRatio = 1.1f;
 
     /********** 초기화 **********/
     void Awake()
     {
-        image = GetComponent<Image>();
+        fishOutline.enabled = true;
 
-        // 시작은 빈틀
-        image.color = Color.gray;
+        fishOutline.effectColor = Color.red;
+        fishOutline.effectDistance = new Vector2(8, 8);
+
+        fishImage.sprite = completedSprite;
+//        fishOutline.effectDistance = new Vector2(8, -8);
+//
+//        if (fishOutline != null)
+//        {
+//            fishOutline.enabled = false;
+//        }
+//
+//        if (fishImage != null && emptySprite != null)
+//        {
+//            fishImage.sprite = emptySprite;
+//        }
     }
 
     // ----------------------------
@@ -59,113 +91,100 @@ public class MoldKey : MonoBehaviour {
     // ----------------------------
     void Update()
     {
-        if (DayManager.Instance == null || !DayManager.Instance.IsOpen()) {
+        // 이미지는 항상 갱신
+        UpdateVisual();
+
+        if (DayManager.Instance == null || !DayManager.Instance.IsOpen())
+        {
             return;
         }
 
-        // 담당 키 입력 확인
         if (Input.GetKeyDown(keyCode))
         {
             HandleKeyPress();
         }
 
-        // 굽기 로직
         UpdateCooking();
-
-        // 깜빡임 로직
-        UpdateBlink();
     }
 
-
     /********** 키 입력 처리 **********/
-    void HandleKeyPress() {
-        if (areaManager.currentArea == GameAreaManager.Area.Ingredient) {
-            switch (state) {
-                case MoldState.Empty:
-                case MoldState.BatterOnly:
-                    AddSelectedIngredient();
-                    break;
-            }
+    void HandleKeyPress()
+    {
+        switch (state)
+        {
+            case MoldState.Empty:
+                StartFrontCooking();
+                break;
 
-            return;
-        }
+            case MoldState.ReadyToFlip:
+                Flip();
+                break;
 
-        if (areaManager.currentArea == GameAreaManager.Area.Mold) {
-            switch (state) {
-                case MoldState.NeedFlip:
-                    Flip();
-                    break;
+            case MoldState.Completed:
+                Collect();
+                break;
 
-                case MoldState.Done:
-                    Collect();
-                    break;
-
-                case MoldState.Burnt:
-                    ResetMold();
-                    break;
-            }
-
-            return;
+            case MoldState.Burnt:
+                ResetMold();
+                break;
         }
     }
 
     // ----------------------------
     // 재료 투입
     // ----------------------------
-    void AddSelectedIngredient() {
-        IngredientData ingredient = ingredientSelector.GetSelectedIngredient();
-
-        // 반죽이 아직 없는 상태
-
-        if (!hasBatter) {
-            // 첫 재료는 반드시 반죽
-            if (ingredient.id != "Batter") {
-                return;
-            }
-
-            hasBatter = true;
-            state = MoldState.BatterOnly;
-            image.color = Color.yellow;
-            Debug.Log($"{keyCode} 반죽 투입");
-
-            return;
-        }
-
-        // 반죽은 있는데 속재료는 없음
-
-        if (filling == null) {
-            // 반죽 또 넣는 거 방지
-            if (ingredient.id == "Batter")
-                return;
-
-            filling = ingredient;
-
-            StartFrontCooking();
-
-            Debug.Log($"{keyCode} {ingredient} 투입");
-        }
-    }
+//    void AddSelectedIngredient() {
+//        IngredientData ingredient = ingredientSelector.GetSelectedIngredient();
+//
+//        // 반죽이 아직 없는 상태
+//
+//        if (!hasBatter) {
+//            // 첫 재료는 반드시 반죽
+//            if (ingredient.id != "Batter") {
+//                return;
+//            }
+//
+//            hasBatter = true;
+//            state = MoldState.BatterOnly;
+//            image.color = Color.yellow;
+//            Debug.Log($"{keyCode} 반죽 투입");
+//
+//            return;
+//        }
+//
+//        // 반죽은 있는데 속재료는 없음
+//
+//        if (filling == null) {
+//            // 반죽 또 넣는 거 방지
+//            if (ingredient.id == "Batter")
+//                return;
+//
+//            filling = ingredient;
+//
+//            StartFrontCooking();
+//
+//            Debug.Log($"{keyCode} {ingredient} 투입");
+//        }
+//    }
 
     // ----------------------------
     // 앞면 굽기 시작
     // ----------------------------
-    void StartFrontCooking() {
-        state = MoldState.CookingFront;
+    void StartFrontCooking()
+    {
+        state = MoldState.Batter;
         timer = 0f;
 
-        image.color = new Color(1f, 0.5f, 0f);
-
-        Debug.Log($"{keyCode} 앞면 굽기 시작");
+        Debug.Log($"{keyCode} 반죽 투입");
     }
 
     // ----------------------------
     // 뒤집기
     // ----------------------------
-    void Flip() {
-        state = MoldState.CookingBack;
+    void Flip()
+    {
+        state = MoldState.BakingBack;
         timer = 0f;
-
-        image.color = new Color(1f, 0.5f, 0f);
 
         Debug.Log($"{keyCode} 뒤집음");
     }
@@ -175,9 +194,10 @@ public class MoldKey : MonoBehaviour {
     // ----------------------------
     void Collect()
     {
-        Debug.Log($"{keyCode} 붕어빵 수거 / 속재료: {filling}");
+        Debug.Log($"{keyCode} 붕어빵 수거");
 
-        inventoryManager.AddBungeoppang(filling.id);
+        // TODO: 나중에 판매대로 이동
+        // inventoryManager.AddBungeoppang("Normal");
 
         ResetMold();
     }
@@ -185,14 +205,10 @@ public class MoldKey : MonoBehaviour {
     // ----------------------------
     // 붕어틀 초기화
     // ----------------------------
-    void ResetMold() {
-        hasBatter = false;
-        filling = null;
+    void ResetMold()
+    {
         timer = 0f;
-        blinkTimer = 0f;
-        blinkOn = true;
         state = MoldState.Empty;
-        image.color = Color.gray;
     }
 
     // ----------------------------
@@ -200,51 +216,57 @@ public class MoldKey : MonoBehaviour {
     // ----------------------------
     void UpdateCooking()
     {
+        if (state == MoldState.Empty || state == MoldState.Burnt)
+            return;
+
         timer += Time.deltaTime;
 
         switch (state)
         {
-            case MoldState.CookingFront:
-                if (timer >= almostReadyTime)
+            case MoldState.Batter:
+                if (timer >= 0.3f)
                 {
-                    state = MoldState.AlmostReadyFront;
-                    image.color = Color.yellow;
-                }
-                break;
-
-            case MoldState.AlmostReadyFront:
-                if (timer >= cookTime)
-                {
-                    state = MoldState.NeedFlip;
+                    state = MoldState.BakingFront;
                     timer = 0f;
                 }
                 break;
 
-            case MoldState.NeedFlip:
-                if (timer >= actionLimitTime)
+            case MoldState.BakingFront:
+                if (IsBurnt())
+                {
+                    Burn();
+                    return;
+                }
+
+                if (IsFlipWindow())
+                {
+                    state = MoldState.ReadyToFlip;
+                }
+                break;
+
+            case MoldState.ReadyToFlip:
+                if (IsBurnt())
                 {
                     Burn();
                 }
                 break;
 
-            case MoldState.CookingBack:
-                if (timer >= almostReadyTime)
+            case MoldState.BakingBack:
+                if (IsBurnt())
                 {
-                    state = MoldState.AlmostReadyBack;
-                    image.color = Color.yellow;
+                    Burn();
+                    return;
                 }
-                break;
 
-            case MoldState.AlmostReadyBack:
-                if (timer >= cookTime)
+                if (IsFlipWindow())
                 {
-                    state = MoldState.Done;
+                    state = MoldState.Completed;
                     timer = 0f;
                 }
                 break;
 
-            case MoldState.Done:
-                if (timer >= actionLimitTime)
+            case MoldState.Completed:
+                if (timer >= bakeTime * 0.5f)
                 {
                     Burn();
                 }
@@ -252,45 +274,103 @@ public class MoldKey : MonoBehaviour {
         }
     }
 
-    // ----------------------------
-    // 깜빡임 처리
-    // ----------------------------
-    void UpdateBlink() {
-        // 파랑 / 초록 상태만 깜빡임
-
-        if (state != MoldState.NeedFlip && state != MoldState.Done) {
-            return;
-        }
-
-
-        blinkTimer += Time.deltaTime;
-
-        if (blinkTimer >= 0.25f) {
-
-            blinkTimer = 0f;
-            blinkOn = !blinkOn;
-
-            if (state == MoldState.NeedFlip) {
-                image.color =
-                    blinkOn ? Color.blue : Color.white;
-            }
-
-            if (state == MoldState.Done) {
-                image.color = blinkOn ? Color.green : Color.white;
-            }
-        }
+    /* 판정함수 */
+    private float GetBakeRatio()
+    {
+        return timer / bakeTime;
     }
 
+    private bool IsFlipWindow()
+    {
+        float ratio = GetBakeRatio();
+        return ratio >= flipStartRatio && ratio <= flipEndRatio;
+    }
+
+    private bool IsBurnt()
+    {
+        return GetBakeRatio() >= burntRatio;
+    }
 
     /********** 탄 붕어빵 처리 **********/
-    void Burn() {
+    void Burn()
+    {
         state = MoldState.Burnt;
         timer = 0f;
-        image.color = Color.red;
 
-        DayManager.Instance.RecordBurned(); // 하루 태운 갯수
+        DayManager.Instance.RecordBurned();
 
         Debug.Log($"{keyCode} 탐");
+    }
+
+    private void UpdateVisual()
+    {
+        fishOutline.enabled = false;
+
+        switch (state)
+        {
+            case MoldState.Empty:
+                fishImage.sprite = emptySprite;
+                break;
+
+            case MoldState.Batter:
+                fishImage.sprite = batterSprite;
+                break;
+
+            case MoldState.BakingFront:
+                fishImage.sprite = GetFrontBakeSprite();
+                break;
+
+            case MoldState.ReadyToFlip:
+                fishImage.sprite = frontStage3Sprite;
+                fishOutline.enabled = true;
+                fishOutline.effectColor = readyOutlineColor;
+                break;
+
+            case MoldState.BakingBack:
+                fishImage.sprite = GetBackBakeSprite();
+                break;
+
+            case MoldState.Completed:
+                fishImage.sprite = backStage3Sprite;
+
+                fishOutline.enabled = true;
+                fishOutline.effectColor = completedOutlineColor;
+
+              break;
+//            case MoldState.Completed:
+//                fishImage.sprite = completedSprite;
+//                break;
+
+            case MoldState.Burnt:
+                fishImage.sprite = burntSprite;
+                break;
+        }
+    }
+
+    private Sprite GetFrontBakeSprite()
+    {
+        float ratio = GetBakeRatio();
+
+        if (ratio < 0.2f)
+            return frontStage1Sprite;
+
+        if (ratio < 0.4f)
+            return frontStage2Sprite;
+
+        return frontStage3Sprite;
+    }
+
+    private Sprite GetBackBakeSprite()
+    {
+        float ratio = timer / bakeTime;
+
+        if (ratio < 0.2f)
+            return backStage1Sprite;
+
+        if (ratio < 0.4f)
+            return backStage2Sprite;
+
+        return backStage3Sprite;
     }
 
 }

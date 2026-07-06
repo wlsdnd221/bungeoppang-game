@@ -3,10 +3,23 @@ using TMPro;
 
 public class MoneyManager : MonoBehaviour
 {
+    public static MoneyManager Instance { get; private set; }
+
     public int money;
     public TMP_Text moneyText;
 
-    void Start()
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+    }
+
+    private void Start()
     {
         UpdateUI();
     }
@@ -18,7 +31,7 @@ public class MoneyManager : MonoBehaviour
         Debug.Log($"돈 +{amount}, 현재 돈: {money}");
     }
 
-    void UpdateUI()
+    private void UpdateUI()
     {
         if (moneyText != null)
             moneyText.text = $"Money: {money}";

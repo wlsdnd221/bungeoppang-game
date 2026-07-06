@@ -14,6 +14,7 @@ public class DayResult
     public int revenue;
     public int customersServed;
     public int satisfiedCustomers;
+    public int sellCount;
     public int burnedCount;
 }
 
@@ -82,6 +83,7 @@ public class DayManager : MonoBehaviour
             revenue = 0,
             customersServed = 0,
             satisfiedCustomers = 0,
+            sellCount = 0,
             burnedCount = 0
         };
 
@@ -129,6 +131,7 @@ public class DayManager : MonoBehaviour
 
         currentResult.revenue += price;
         currentResult.customersServed++;
+        currentResult.sellCount++;
 
         if (isSatisfied)
         {

@@ -190,14 +190,20 @@ public class MoldKey : MonoBehaviour {
     }
 
     // ----------------------------
-    // 완성품 수거
+    // 가판대로 이동
     // ----------------------------
     void Collect()
     {
-        Debug.Log($"{keyCode} 붕어빵 수거");
+        Debug.Log($"{keyCode} 가판대로 이동");
+        
+        // 가판대로 이동
+        StandManager.Instance.AddBungeoppang();
+        // 경험치 획득
+        ExperienceManager.Instance.AddExp();
 
-        // TODO: 나중에 판매대로 이동
-        // inventoryManager.AddBungeoppang("Normal");
+        // 증강 선택시 사용
+//        ExperienceManager.Instance.AddExpBonus(1);
+//        ExperienceManager.Instance.AddExpMultiplier(0.2f);
 
         ResetMold();
     }

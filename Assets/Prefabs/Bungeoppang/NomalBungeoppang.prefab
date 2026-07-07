@@ -88,4 +88,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4d6023a4d0255684fa53b018a779491b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SellableBungeoppang
-  price: 1
+  price: 10

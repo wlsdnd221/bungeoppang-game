@@ -12,13 +12,10 @@ public class ExperienceManager : MonoBehaviour
     [SerializeField] private int baseRequiredExp = 5;
     [SerializeField] private float requiredExpGrowth = 1.35f;
 
-    [Header("Exp Bonus")]
-    [SerializeField] private int expBonus = 0;
-    [SerializeField] private float expMultiplier = 1f;
-
     [Header("UI")]
     [SerializeField] private TMP_Text levelText;
     [SerializeField] private Image expBarFill;
+    [SerializeField] private TMP_Text expText;
 
     [Header("Animation")]
     [SerializeField] private float fillSpeed = 8f;
@@ -26,8 +23,7 @@ public class ExperienceManager : MonoBehaviour
     private float targetExpRatio;
     private float displayExpRatio;
 
-    private int RequiredExp =>
-        Mathf.CeilToInt(baseRequiredExp * Mathf.Pow(requiredExpGrowth, level - 1));
+    private int RequiredExp => Mathf.CeilToInt(baseRequiredExp * Mathf.Pow(requiredExpGrowth, level - 1));
 
     private void Awake()
     {
@@ -55,7 +51,16 @@ public class ExperienceManager : MonoBehaviour
 
     public void AddExp(int baseExp = 1)
     {
-        int finalExp = Mathf.CeilToInt((baseExp + expBonus) * expMultiplier);
+        int bonus = 0;
+        float multiplier = 1f;
+
+        if (PlayerStats.Instance != null)
+        {
+            bonus = PlayerStats.Instance.expBonus;
+            multiplier = PlayerStats.Instance.expMultiplier;
+        }
+
+        int finalExp = Mathf.CeilToInt((baseExp + bonus) * multiplier);
 
         exp += finalExp;
 
@@ -72,9 +77,9 @@ public class ExperienceManager : MonoBehaviour
 
     private void LevelUp()
     {
-        if (AugmentUI.Instance == null)
+        if (AugmentManager.Instance == null)
         {
-            Debug.LogError("AugmentUI가 씬에 없습니다.");
+            Debug.LogError("AugmentManager가 씬에 없습니다.");
             return;
         }
 
@@ -82,19 +87,8 @@ public class ExperienceManager : MonoBehaviour
 
         Debug.Log($"레벨업! 현재 레벨: {level}");
 
-        // 2순위에서 여기서 레벨업 UI/증강창 띄움
         RefreshTargetUI();
-        AugmentUI.Instance.Show();
-    }
-
-    public void AddExpBonus(int amount)
-    {
-        expBonus += amount;
-    }
-
-    public void AddExpMultiplier(float amount)
-    {
-        expMultiplier += amount;
+        AugmentManager.Instance.ShowAugmentPanel();
     }
 
     private void RefreshTargetUI()
@@ -107,5 +101,25 @@ public class ExperienceManager : MonoBehaviour
     {
         if (levelText != null)
             levelText.text = $"Lv. {level}";
+
+        if (expText != null)
+            expText.text = $"{exp} / {RequiredExp}";
     }
+
+    public void ResetExp()
+    {
+        level = 1;
+        exp = 0;
+
+        targetExpRatio = 0f;
+        displayExpRatio = 0f;
+
+        ApplyUI();
+
+        if (expBarFill != null)
+            expBarFill.fillAmount = 0f;
+
+        Debug.Log("ExperienceManager 초기화");
+    }
+
 }

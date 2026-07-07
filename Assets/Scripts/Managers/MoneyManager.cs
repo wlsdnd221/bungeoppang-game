@@ -36,4 +36,22 @@ public class MoneyManager : MonoBehaviour
         if (moneyText != null)
             moneyText.text = $"Money: {money}";
     }
+
+    // 소지금이 해당 비용보다 큰지 여부
+    public bool CanSpendMoney(int amount)
+    {
+        return money >= amount;
+    }
+
+    // 소비
+    public void SpendMoney(int amount)
+    {
+        if (!CanSpendMoney(amount))
+            return;
+
+        money -= amount;
+        UpdateUI();
+
+        Debug.Log($"돈 -{amount}, 현재 돈: {money}");
+    }
 }

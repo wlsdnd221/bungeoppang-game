@@ -77,6 +77,21 @@ public class DayManager : MonoBehaviour
 
         remainingTime = dayDuration;
 
+        /* 초기화 */
+        // 스텟 초기화
+        if (PlayerStats.Instance != null) PlayerStats.Instance.ResetStats();
+        // 증강 초기화
+        if (AugmentManager.Instance != null) AugmentManager.Instance.ResetAugments();
+        // 경험치 초기화
+        if (ExperienceManager.Instance != null) ExperienceManager.Instance.ResetExp();
+        // 가판대 초기화
+        if (StandManager.Instance != null) StandManager.Instance.ResetStand();
+        // 붕어틀 초기화
+        MoldKey[] molds = FindObjectsOfType<MoldKey>();
+        foreach (MoldKey mold in molds) {
+            mold.ResetMold();
+        }
+
         currentResult = new DayResult
         {
             day = currentDay,
@@ -100,11 +115,11 @@ public class DayManager : MonoBehaviour
         currentState = DayState.Result;
 
         // 임시 결과 콘솔
-        Debug.Log($"[DayManager] Day {currentDay} End");
-        Debug.Log($"[DayManager] Revenue: {currentResult.revenue}");
-        Debug.Log($"[DayManager] Customers: {currentResult.customersServed}");
-        Debug.Log($"[DayManager] Satisfied: {currentResult.satisfiedCustomers}");
-        Debug.Log($"[DayManager] Burned: {currentResult.burnedCount}");
+//        Debug.Log($"[DayManager] Day {currentDay} End");
+//        Debug.Log($"[DayManager] Revenue: {currentResult.revenue}");
+//        Debug.Log($"[DayManager] Customers: {currentResult.customersServed}");
+//        Debug.Log($"[DayManager] Satisfied: {currentResult.satisfiedCustomers}");
+//        Debug.Log($"[DayManager] Burned: {currentResult.burnedCount}");
 
         // 결과창 표시
         resultUI.Show(currentResult);
@@ -115,10 +130,9 @@ public class DayManager : MonoBehaviour
         if (currentState != DayState.Result)
             return;
 
-        currentDay++;
 
-        resultUI.Hide();
-
+        currentDay++;       // 다음날
+        resultUI.Hide();    // 결과창 숨김
         SetReadyState();
 
         StartDay();

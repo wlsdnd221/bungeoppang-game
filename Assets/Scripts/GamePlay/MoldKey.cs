@@ -3,8 +3,8 @@ using UnityEngine.UI;
 
 public class MoldKey : MonoBehaviour {
 
-    public GameAreaManager areaManager;         // 활성화 구역
-    public InventoryManager inventoryManager;   // 수거 된 붕어빵 인벤토리
+//    public GameAreaManager areaManager;         // 활성화 구역
+//    public InventoryManager inventoryManager;   // 수거 된 붕어빵 인벤토리
 
     // 이 붕어틀이 담당하는 키
     // Q 틀인지, W 틀인지 구분
@@ -95,6 +95,12 @@ public class MoldKey : MonoBehaviour {
         UpdateVisual();
 
         if (DayManager.Instance == null || !DayManager.Instance.IsOpen())
+        {
+            return;
+        }
+        
+         // 증강 선택창이 열려 있으면 입력/굽기 진행 중지
+        if (AugmentManager.Instance != null && AugmentManager.Instance.IsAugmentPanelOpen)
         {
             return;
         }
@@ -211,7 +217,7 @@ public class MoldKey : MonoBehaviour {
     // ----------------------------
     // 붕어틀 초기화
     // ----------------------------
-    void ResetMold()
+    public void ResetMold()
     {
         timer = 0f;
         state = MoldState.Empty;
@@ -225,7 +231,14 @@ public class MoldKey : MonoBehaviour {
         if (state == MoldState.Empty || state == MoldState.Burnt)
             return;
 
-        timer += Time.deltaTime;
+        float cookTimeMultiplier = 1f;
+
+        if (PlayerStats.Instance != null)
+        {
+            cookTimeMultiplier = PlayerStats.Instance.cookTimeMultiplier;
+        }
+
+        timer += Time.deltaTime / cookTimeMultiplier;
 
         switch (state)
         {

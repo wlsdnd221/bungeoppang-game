@@ -30,10 +30,30 @@ public class StandManager : MonoBehaviour
     // 판매 처리
     public void Sell(SellableBungeoppang bungeoppang)
     {
-        MoneyManager.Instance.AddMoney(bungeoppang.Price);
+        int basePrice = bungeoppang.Price;  // 기본 판매금
+        float multiplier = 1f;              // 배율
 
-        DayManager.Instance.RecordSale(bungeoppang.Price, true);
+        if (PlayerStats.Instance != null)
+        {
+            multiplier = PlayerStats.Instance.sellPriceMultiplier;
+        }
+
+        int finalPrice = Mathf.RoundToInt(basePrice * multiplier);
+
+        MoneyManager.Instance.AddMoney(finalPrice);
+        DayManager.Instance.RecordSale(finalPrice, true);
 
         Destroy(bungeoppang.gameObject);
+    }
+
+    // 초기화
+    public void ResetStand()
+    {
+        for (int i = standParent.childCount - 1; i >= 0; i--)
+        {
+            Destroy(standParent.GetChild(i).gameObject);
+        }
+
+        Debug.Log("가판대 초기화 완료");
     }
 }

@@ -20,6 +20,12 @@ public class ResultUI : MonoBehaviour
         burnedText.text = $"Burned : {result.burnedCount}";
     }
 
+    public void OpenSkillTree()
+    {
+        Hide();
+        SkillTreeUI.Instance.Open();
+    }
+
     public void Hide()
     {
         gameObject.SetActive(false);

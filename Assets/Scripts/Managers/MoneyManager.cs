@@ -54,4 +54,10 @@ public class MoneyManager : MonoBehaviour
 
         Debug.Log($"돈 -{amount}, 현재 돈: {money}");
     }
+
+    // 현재 돈
+    public int GetMoney()
+    {
+        return money;
+    }
 }

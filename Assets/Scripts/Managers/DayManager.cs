@@ -79,7 +79,14 @@ public class DayManager : MonoBehaviour
 
         /* 초기화 */
         // 스텟 초기화
-        if (PlayerStats.Instance != null) PlayerStats.Instance.ResetStats();
+        if (PlayerStats.Instance != null)
+        {
+            PlayerStats.Instance.ResetSkillStats();
+            if (SkillManager.Instance != null)
+            {
+                SkillManager.Instance.RecalculatePlayerStats();
+            }
+        }
         // 증강 초기화
         if (AugmentManager.Instance != null) AugmentManager.Instance.ResetAugments();
         // 경험치 초기화
@@ -113,16 +120,7 @@ public class DayManager : MonoBehaviour
             return;
 
         currentState = DayState.Result;
-
-        // 임시 결과 콘솔
-//        Debug.Log($"[DayManager] Day {currentDay} End");
-//        Debug.Log($"[DayManager] Revenue: {currentResult.revenue}");
-//        Debug.Log($"[DayManager] Customers: {currentResult.customersServed}");
-//        Debug.Log($"[DayManager] Satisfied: {currentResult.satisfiedCustomers}");
-//        Debug.Log($"[DayManager] Burned: {currentResult.burnedCount}");
-
-        // 결과창 표시
-        resultUI.Show(currentResult);
+        resultUI.Show(currentResult);       // 결과창 표시
     }
 
     public void NextDay()
@@ -131,8 +129,9 @@ public class DayManager : MonoBehaviour
             return;
 
 
-        currentDay++;       // 다음날
-        resultUI.Hide();    // 결과창 숨김
+        currentDay++;                   // 다음날
+        resultUI.Hide();                // 결과창 숨김
+        SkillTreeUI.Instance.Close();   // 스킬트리 숨김
         SetReadyState();
 
         StartDay();

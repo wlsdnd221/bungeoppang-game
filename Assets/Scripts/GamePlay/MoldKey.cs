@@ -201,11 +201,10 @@ public class MoldKey : MonoBehaviour {
     void Collect()
     {
         Debug.Log($"{keyCode} 가판대로 이동");
-        
-        // 가판대로 이동
-        StandManager.Instance.AddBungeoppang();
-        // 경험치 획득
-        ExperienceManager.Instance.AddExp();
+
+        PlayerStats.Instance.AddCollectedBungeoppang();    // 플레이어가 만든 총 붕어빵 갯수
+        StandManager.Instance.AddBungeoppang();            // 가판대로 이동
+        ExperienceManager.Instance.AddExp();               // 경험치 획득
 
         // 증강 선택시 사용
 //        ExperienceManager.Instance.AddExpBonus(1);

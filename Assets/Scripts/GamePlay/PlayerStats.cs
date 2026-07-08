@@ -4,7 +4,6 @@ public class PlayerStats : MonoBehaviour
 {
     public static PlayerStats Instance { get; private set; }
 
-
     [Header("Cooking")]
     public float cookTimeMultiplier = 1f;
 
@@ -13,10 +12,13 @@ public class PlayerStats : MonoBehaviour
 
     [Header("Exp")]
     public int expBonus = 0;
-   public float expMultiplier = 1f;
+    public float expMultiplier = 1f;
 
-//    [Header("Special Fish")]
-//    public float rareChanceAdd = 0f;
+    [Header("Special Fish")]
+    public float specialFishChanceAdd = 0f;
+
+    public int TotalCollectedBungeoppang { get; private set; }
+    public int TotalSpecialBungeoppang { get; private set; }
 
     private void Awake()
     {
@@ -29,6 +31,27 @@ public class PlayerStats : MonoBehaviour
         Instance = this;
     }
 
+    public void AddCollectedBungeoppang(bool isSpecial = false)
+    {
+        TotalCollectedBungeoppang++;
+
+        if (isSpecial)
+        {
+            TotalSpecialBungeoppang++;
+        }
+    }
+
+    public void ResetSkillStats()
+    {
+        sellPriceMultiplier = 1f;
+        cookTimeMultiplier = 1f;
+        expBonus = 0;
+        expMultiplier = 1f;
+        specialFishChanceAdd = 0f;
+
+        Debug.Log("PlayerStats 스킬 능력치 초기화 완료");
+    }
+
     public void AddSellPriceMultiplier(float value)
     {
         sellPriceMultiplier += value;
@@ -38,11 +61,6 @@ public class PlayerStats : MonoBehaviour
     {
         cookTimeMultiplier += value;
     }
-
-//    public void AddRareChance(float value)
-//    {
-//        rareChanceAdd += value;
-//    }
 
     public void AddExpBonus(int value)
     {
@@ -54,14 +72,8 @@ public class PlayerStats : MonoBehaviour
         expMultiplier += value;
     }
 
-    public void ResetStats()
+    public void AddSpecialFishChance(float value)
     {
-        sellPriceMultiplier = 1f;
-        cookTimeMultiplier = 1f;
-        expBonus = 0;
-        expMultiplier = 1f;
-
-        Debug.Log("PlayerStats 초기화 완료");
+        specialFishChanceAdd += value;
     }
-
 }

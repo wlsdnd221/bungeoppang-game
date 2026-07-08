@@ -40,8 +40,6 @@ public class AugmentManager : MonoBehaviour
         List<AugmentData> augments = GetRandomAugments(3);
         currentAugments.AddRange(augments);
 
-
-
         panelUI.Show(currentAugments);
         Time.timeScale = 0f;
     }
